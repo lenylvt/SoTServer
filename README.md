@@ -26,14 +26,19 @@ cargo build --release
 3. **Sélectionnez votre mode** :
    - `idk` pour afficher le serveur actuel
    - Entrez une adresse IP pour rejoindre un serveur spécifique
+4. **Choisissez votre type de navire** :
+   - Galion, Brigantin ou Sloop
 
-### 🔄 Changer de serveur
+### 🔄 Changer de serveur automatiquement
 
 1. Définissez le serveur cible (obtenu d'un ami)
 2. Mettez les voiles dans Sea of Thieves
 3. Le programme bloquera les connexions aux serveurs non désirés
-4. À l'échec de connexion, répondez **NON** à "Voulez-vous rejoindre votre session précédente?"
-5. Appuyez sur Entrée pour débloquer et réessayer
+4. **⚡ La séquence s'exécute automatiquement** :
+   - Simulation des touches clavier
+   - Navigation dans les menus
+   - Sélection du type de navire choisi
+5. Appuyez sur Entrée quand la séquence est terminée pour débloquer la connexion
 6. Répétez jusqu'à atteindre le bon serveur
 
 ## ⚠️ Remarques
@@ -41,6 +46,7 @@ cargo build --release
 - Plus vous avez d'amis qui font la même chose, plus vos chances augmentent!
 - Fonctionne uniquement sur Windows
 - Le script de compilation télécharge automatiquement le SDK Npcap 1.13
+- Gardez la fenêtre du jeu Sea of Thieves active pendant la séquence automatique
 
 ## 🔗 Voir aussi
 - [SeaOfEase](https://github.com/Saeryhz/SeaOfEase)

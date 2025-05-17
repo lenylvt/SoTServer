@@ -1,6 +1,7 @@
-use std::{net::IpAddr, process::Command};
+use std::{net::IpAddr, process::Command, thread::sleep, time::Duration};
 
 use colored::*;
+use enigo::{Enigo, Key, KeyboardControllable};
 use etherparse::{IpHeader, PacketHeaders};
 use sysinfo::{PidExt, ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use winroute::{Route, RouteManager};
@@ -36,6 +37,80 @@ fn trouver_ports_sot(pid: u32) -> Vec<u16> {
             port.parse::<u16>().unwrap()
         })
         .collect()
+}
+
+fn executer_sequence_automatique(type_navire: &str) {
+    println!("{}", "🤖 Exécution automatique de la séquence...".cyan().bold());
+    let mut enigo = Enigo::new();
+    
+    // Attendre 41s
+    println!("{}", "⏱️  Attente de 41s...".yellow());
+    sleep(Duration::from_secs(41));
+    
+    // Appuyer sur Entrée
+    println!("{}", "⌨️  Entrée".yellow());
+    enigo.key_click(Key::Return);
+    sleep(Duration::from_secs(5));
+    
+    // Appuyer sur Échap
+    println!("{}", "⌨️  Échap".yellow());
+    enigo.key_click(Key::Escape);
+    sleep(Duration::from_secs(1));
+    
+    // 4 fois Entrée avec 1s d'intervalle
+    for i in 1..=4 {
+        println!("{} {}/4", "⌨️  Entrée".yellow(), i);
+        enigo.key_click(Key::Return);
+        sleep(Duration::from_secs(1));
+    }
+    
+    sleep(Duration::from_secs(2));
+    
+    // Sélection du navire
+    match type_navire {
+        "galion" => {
+            println!("{}", "⌨️  Sélection du Galion".yellow());
+            enigo.key_click(Key::Return);
+        },
+        "brigantin" => {
+            println!("{}", "⌨️  Sélection du Brigantin".yellow());
+            enigo.key_click(Key::Down);
+            sleep(Duration::from_millis(500));
+            enigo.key_click(Key::Return);
+        },
+        "sloop" => {
+            println!("{}", "⌨️  Sélection du Sloop".yellow());
+            enigo.key_click(Key::Down);
+            sleep(Duration::from_millis(500));
+            enigo.key_click(Key::Down);
+            sleep(Duration::from_millis(500));
+            enigo.key_click(Key::Return);
+        },
+        _ => {
+            println!("{}", "⌨️  Utilisation de la sélection par défaut (Galion)".yellow());
+            enigo.key_click(Key::Return);
+        }
+    }
+    
+    sleep(Duration::from_secs(1));
+    
+    // Flèche Bas puis Entrée
+    println!("{}", "⌨️  Flèche Bas + Entrée".yellow());
+    enigo.key_click(Key::Down);
+    sleep(Duration::from_millis(500));
+    enigo.key_click(Key::Return);
+    sleep(Duration::from_secs(1));
+    
+    // Entrée
+    println!("{}", "⌨️  Entrée".yellow());
+    enigo.key_click(Key::Return);
+    sleep(Duration::from_secs(6));
+    
+    // Entrée finale
+    println!("{}", "⌨️  Entrée finale".yellow());
+    enigo.key_click(Key::Return);
+    
+    println!("{}", "✅ Séquence automatique terminée!".green().bold());
 }
 
 fn main() {
@@ -125,6 +200,22 @@ fn main() {
     std::io::stdin().read_line(&mut cible).unwrap();
     let cible = cible.trim();
 
+    println!("{}", "🚢 Quel type de navire utiliserez-vous?".cyan().bold());
+    println!("{}", "    1. Galion".yellow());
+    println!("{}", "    2. Brigantin".yellow());
+    println!("{}", "    3. Sloop".yellow());
+    
+    let mut choix_navire = String::new();
+    std::io::stdin().read_line(&mut choix_navire).unwrap();
+    let type_navire = match choix_navire.trim() {
+        "1" => "galion",
+        "2" => "brigantin", 
+        "3" => "sloop",
+        _ => "galion" // par défaut
+    };
+    
+    println!("{} {}", "🎯 Type de navire:".green(), type_navire.yellow().bold());
+
     if cible == "idk" {
         println!("{}", "🔍 Affichage du serveur en cours...".green());
     } else {
@@ -184,8 +275,10 @@ fn main() {
                                         e
                                     );
                                 } else {
-                                    println!("{}", "⚠️  Répondez NON à 'Voulez-vous rejoindre votre session précédente?'".yellow().bold());
-                                    println!("{}", "   Puis appuyez sur Entrée ici.".italic());
+                                    println!("{}", "⚙️  Démarrage de la séquence automatique...".cyan().bold());
+                                    executer_sequence_automatique(type_navire);
+                                    
+                                    println!("\n{}", "⚠️  Séquence terminée. Appuyez sur Entrée pour débloquer la connexion...".green().bold());
                                     std::io::stdin().read_line(&mut String::new()).unwrap();
                                 }
 
