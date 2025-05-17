@@ -1,10 +1,21 @@
-use std::{net::IpAddr, process::Command, thread::sleep, time::Duration};
+use std::{
+    io::{self, Read},
+    net::IpAddr, 
+    process::Command, 
+    sync::atomic::{AtomicBool, Ordering},
+    sync::Arc,
+    thread,
+    thread::sleep, 
+    time::Duration
+};
 
 use colored::*;
 use enigo::{Enigo, Key, KeyboardControllable};
 use etherparse::{IpHeader, PacketHeaders};
 use sysinfo::{PidExt, ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use winroute::{Route, RouteManager};
+
+static LOGS_CLEAN: &str = "                                                            \r";
 
 fn trouver_pid_sot(s: &System) -> Option<u32> {
     s.processes_by_name("SoTGame.exe").next().map(|process| process.pid().as_u32())
@@ -39,50 +50,100 @@ fn trouver_ports_sot(pid: u32) -> Vec<u16> {
         .collect()
 }
 
-fn executer_sequence_automatique(type_navire: &str) {
+fn check_for_alt_m() -> bool {
+    // Vérification simplifiée - une implémentation complète nécessiterait d'utiliser 
+    // des bibliothèques de gestion d'événements clavier au niveau système
+    if let Some(Ok(b)) = io::stdin().bytes().next() {
+        return b == b'm' || b == b'M';
+    }
+    false
+}
+
+fn executer_sequence_automatique(type_navire: &str, stop_flag: Arc<AtomicBool>) -> bool {
+    print!("{}", LOGS_CLEAN);
     println!("{}", "🤖 Exécution automatique de la séquence...".cyan().bold());
+    println!("{}", "    Appuyez sur Alt+M pour interrompre et reprendre manuellement".cyan().italic());
+    
     let mut enigo = Enigo::new();
     
+    // Vérification d'interruption en parallèle
+    let stop_flag_clone = Arc::clone(&stop_flag);
+    thread::spawn(move || {
+        while !stop_flag_clone.load(Ordering::SeqCst) {
+            if check_for_alt_m() {
+                stop_flag_clone.store(true, Ordering::SeqCst);
+                break;
+            }
+            sleep(Duration::from_millis(100));
+        }
+    });
+    
     // Attendre 41s
+    print!("{}", LOGS_CLEAN);
     println!("{}", "⏱️  Attente de 41s...".yellow());
-    sleep(Duration::from_secs(41));
+    
+    for i in (0..41).rev() {
+        if stop_flag.load(Ordering::SeqCst) {
+            println!("{}", "⚠️  Séquence interrompue manuellement!".yellow());
+            return false;
+        }
+        
+        print!("{}Temps restant: {}s\r", " ".repeat(4), i);
+        sleep(Duration::from_secs(1));
+    }
+    
+    if stop_flag.load(Ordering::SeqCst) { return false; }
     
     // Appuyer sur Entrée
+    print!("{}", LOGS_CLEAN);
     println!("{}", "⌨️  Entrée".yellow());
     enigo.key_click(Key::Return);
     sleep(Duration::from_secs(5));
     
+    if stop_flag.load(Ordering::SeqCst) { return false; }
+    
     // Appuyer sur Échap
+    print!("{}", LOGS_CLEAN);
     println!("{}", "⌨️  Échap".yellow());
     enigo.key_click(Key::Escape);
     sleep(Duration::from_secs(1));
     
+    if stop_flag.load(Ordering::SeqCst) { return false; }
+    
     // 4 fois Entrée avec 1s d'intervalle
     for i in 1..=4 {
+        if stop_flag.load(Ordering::SeqCst) { return false; }
+        
+        print!("{}", LOGS_CLEAN);
         println!("{} {}/4", "⌨️  Entrée".yellow(), i);
         enigo.key_click(Key::Return);
-        sleep(Duration::from_secs(1));
+        sleep(Duration::from_secs(3));
     }
+    
+    if stop_flag.load(Ordering::SeqCst) { return false; }
     
     sleep(Duration::from_secs(2));
     
+    if stop_flag.load(Ordering::SeqCst) { return false; }
+    
     // Sélection du navire
+    print!("{}", LOGS_CLEAN);
     match type_navire {
         "galion" => {
             println!("{}", "⌨️  Sélection du Galion".yellow());
+            enigo.key_click(Key::UpArrow);
+            sleep(Duration::from_millis(500));
             enigo.key_click(Key::Return);
         },
         "brigantin" => {
             println!("{}", "⌨️  Sélection du Brigantin".yellow());
-            enigo.key_click(Key::Down);
-            sleep(Duration::from_millis(500));
             enigo.key_click(Key::Return);
         },
         "sloop" => {
             println!("{}", "⌨️  Sélection du Sloop".yellow());
-            enigo.key_click(Key::Down);
+            enigo.key_click(Key::DownArrow);
             sleep(Duration::from_millis(500));
-            enigo.key_click(Key::Down);
+            enigo.key_click(Key::DownArrow);
             sleep(Duration::from_millis(500));
             enigo.key_click(Key::Return);
         },
@@ -92,25 +153,39 @@ fn executer_sequence_automatique(type_navire: &str) {
         }
     }
     
-    sleep(Duration::from_secs(1));
+    if stop_flag.load(Ordering::SeqCst) { return false; }
+    
+    sleep(Duration::from_secs(2));
+    
+    if stop_flag.load(Ordering::SeqCst) { return false; }
     
     // Flèche Bas puis Entrée
+    print!("{}", LOGS_CLEAN);
     println!("{}", "⌨️  Flèche Bas + Entrée".yellow());
-    enigo.key_click(Key::Down);
+    enigo.key_click(Key::DownArrow);
     sleep(Duration::from_millis(500));
     enigo.key_click(Key::Return);
-    sleep(Duration::from_secs(1));
+    sleep(Duration::from_secs(2));
+    
+    if stop_flag.load(Ordering::SeqCst) { return false; }
     
     // Entrée
+    print!("{}", LOGS_CLEAN);
     println!("{}", "⌨️  Entrée".yellow());
     enigo.key_click(Key::Return);
-    sleep(Duration::from_secs(6));
+    sleep(Duration::from_secs(2));
+    
+    if stop_flag.load(Ordering::SeqCst) { return false; }
     
     // Entrée finale
+    print!("{}", LOGS_CLEAN);
     println!("{}", "⌨️  Entrée finale".yellow());
     enigo.key_click(Key::Return);
     
+    print!("{}", LOGS_CLEAN);
     println!("{}", "✅ Séquence automatique terminée!".green().bold());
+    
+    true
 }
 
 fn main() {
@@ -246,19 +321,9 @@ fn main() {
                                 }
 
                                 if format!("{}:{}", ip, udp.destination_port) != cible {
-                                    println!(
-                                        "{} {}:{}",
-                                        "❌ ÉCHEC".red().bold(),
-                                        ip.yellow(),
-                                        udp.destination_port.to_string().yellow()
-                                    );
+                                    println!("\n{} {}:{}", "❌ ÉCHEC".red().bold(), ip.yellow(), udp.destination_port.to_string().yellow());
                                 } else {
-                                    println!(
-                                        "{} {}:{}",
-                                        "✅ SUCCÈS".green().bold(),
-                                        ip.yellow(),
-                                        udp.destination_port.to_string().yellow()
-                                    );
+                                    println!("\n{} {}:{}", "✅ SUCCÈS".green().bold(), ip.yellow(), udp.destination_port.to_string().yellow());
                                     std::io::stdin().read_line(&mut String::new()).unwrap();
                                     break;
                                 }
@@ -276,9 +341,16 @@ fn main() {
                                     );
                                 } else {
                                     println!("{}", "⚙️  Démarrage de la séquence automatique...".cyan().bold());
-                                    executer_sequence_automatique(type_navire);
                                     
-                                    println!("\n{}", "⚠️  Séquence terminée. Appuyez sur Entrée pour débloquer la connexion...".green().bold());
+                                    // Utilisation d'un flag pour permettre l'interruption
+                                    let stop_flag = Arc::new(AtomicBool::new(false));
+                                    let sequence_terminee = executer_sequence_automatique(type_navire, stop_flag);
+                                    
+                                    if !sequence_terminee {
+                                        println!("{}", "⚠️  Séquence interrompue - mode manuel activé".yellow().bold());
+                                    }
+                                    
+                                    println!("\n{}", "⚠️  Appuyez sur Entrée pour débloquer la connexion...".green().bold());
                                     std::io::stdin().read_line(&mut String::new()).unwrap();
                                 }
 
@@ -292,6 +364,8 @@ fn main() {
                                     .unwrap();
                                 if !statut.success() {
                                     println!("{}", "❌ Échec de suppression de la route.".red());
+                                } else {
+                                    println!("{}", " OK!".green());
                                 }
 
                                 println!("{}", "🚢 Essayez de lever l'ancre à nouveau.".cyan().bold());

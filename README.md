@@ -27,7 +27,9 @@ cargo build --release
    - `idk` pour afficher le serveur actuel
    - Entrez une adresse IP pour rejoindre un serveur spécifique
 4. **Choisissez votre type de navire** :
-   - Galion, Brigantin ou Sloop
+   - `1` - Galion
+   - `2` - Brigantin 
+   - `3` - Sloop
 
 ### 🔄 Changer de serveur automatiquement
 
@@ -38,6 +40,7 @@ cargo build --release
    - Simulation des touches clavier
    - Navigation dans les menus
    - Sélection du type de navire choisi
+   - **Possibilité d'interrompre avec Alt+M** pour passer en mode manuel
 5. Appuyez sur Entrée quand la séquence est terminée pour débloquer la connexion
 6. Répétez jusqu'à atteindre le bon serveur
 
@@ -47,6 +50,7 @@ cargo build --release
 - Fonctionne uniquement sur Windows
 - Le script de compilation télécharge automatiquement le SDK Npcap 1.13
 - Gardez la fenêtre du jeu Sea of Thieves active pendant la séquence automatique
+- Si vous interrompez la séquence avec Alt+M, vous devrez compléter les actions manuellement
 
 ## 🔗 Voir aussi
 - [SeaOfEase](https://github.com/Saeryhz/SeaOfEase)
